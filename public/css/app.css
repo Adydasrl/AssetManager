@@ -1,0 +1,103 @@
+/*@tailwind base;
+@tailwind components;
+@tailwind utilities;
+*/
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #2c3e50; /* Sfondo elegante scuro */
+    font-family: Arial, sans-serif;
+    color: #ecf0f1; /* Testo chiaro */
+}
+
+h1,h6 {
+    text-align:center;
+    color:#e74c3c;
+}
+
+.login-container {
+    height: auto;
+    width: 1000px;
+    border: 2px solid #e74c3c; /* Rosso brillante */
+    border-radius: 10px;
+    padding: 20px 30px;
+    background-color: #34495e; /* Contrasto scuro */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+}
+
+#info_ver {
+    margin-top: -20px;
+}
+
+label {
+    color: #ecf0f1; /* Testo chiaro */
+    font-size: 14px;
+}
+
+input,select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border: 1px solid #95a5a6;
+    border-radius: 5px;
+    background-color: #2c3e50;
+    color: #ecf0f1;
+}
+
+input::placeholder {
+    color: #7f8c8d; /* Colore placeholder */
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #e74c3c; /* Rosso brillante */
+    color: #ecf0f1;
+    border: 2px solid #f39c12;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #c0392b; /* Rosso più scuro al passaggio del mouse */
+    border-color: #f1c40f;
+}
+
+nav {
+    position: absolute; /*absolute*/
+    top: 20px;
+    left: auto;
+    width: 100%;
+    /*background-color: #34495e;*/
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    display: flex;
+    justify-content: space-between;
+    z-index: 1000;
+}
+
+.alert {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    z-index: 1000;
+}
+
+table,tr,th,td {
+    border:white 1px solid;
+    width:300px;
+    height: 50px;
+    text-align: center;
+    color: #c0392b; /*red*/
+}
