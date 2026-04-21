@@ -13,10 +13,10 @@ return new class extends Migration
     {
         Schema::create('assets', function (Blueprint $table) {
             $table->id();
-            $table->string('codifica dispositivo');
-            $table->string('tipo dispositivo');
+            $table->string('codifica_dispositivo');
+            $table->string('tipo_dispositivo');
             $table->foreignId('customer_id')->nullable()->constrained();
-            $table->string('serial number');
+            $table->string('serial_number');
             $table->enum('type', ['interno', 'cliente']);
             $table->string('owner_name')->nullable();
             //$table->string('status');

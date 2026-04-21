@@ -30,27 +30,29 @@ class AssetController extends Controller
         $company_name=$type=="interno"?"Adyda":(isset($request->new_company_name)?$request->new_company_name:$request->company_name);
         $owner=$type=='cliente'?null:(isset($request->new_dest_name)?$request->new_dest_name:$request->dest_name);
         $company_id=$this->getCompanyID($company_name);
-        $dev_code=$this->codeDevice($abb_device,$company_name);
+
 
         if(isset($request->new_device_name)) {
             $this->createDevice($device_type,$abb_device);
         }
 
+        $dev_code=$this->codeDevice($abb_device,$company_name);
+
         if($type==="interno") {
             Asset::create([
-                'codifica dispositivo' => $dev_code,
-                'tipo dispositivo' => $abb_device,
-                'serial number' => $request->serial_num,
+                'codifica_dispositivo' => $dev_code,
+                'tipo_dispositivo' => $abb_device,
+                'serial_number' => $request->serial_num,
                 'type' => $type,
                 'owner_name' => $owner
             ]);
         }
         else {
             Asset::create([
-                'codifica dispositivo' => $dev_code,
-                'tipo dispositivo' => $abb_device,
+                'codifica_dispositivo' => $dev_code,
+                'tipo_dispositivo' => $abb_device,
                 'customer_id' => $company_id,
-                'serial number' => $request->serial_num,
+                'serial_number' => $request->serial_num,
                 'type' => $type
             ]);
         }
@@ -92,16 +94,16 @@ class AssetController extends Controller
     function codeDevice($device_type,$company_name) {
         $alias=$this->createAlias($company_name);
         $company_id=$this->getCompanyID($company_name);
-        $sigla=Device::where('abbreviazione','=',$device_type)->get();
-        $asset_num=isset($company_id)? Asset::where('customer_id','=',$company_id)->where('tipo dispositivo','=',$device_type)->count(): 
-                                       Asset::whereNull('customer_id')->where('tipo dispositivo','=',$device_type)->count();
+        //$sigla=Device::where('abbreviazione','=',$device_type)->get();
+        $asset_num=isset($company_id)? Asset::where('customer_id','=',$company_id)->where('tipo_dispositivo','=',$device_type)->count():
+                                       Asset::whereNull('customer_id')->where('owner_name',"!=",null)->where('tipo_dispositivo','=',$device_type)->count();
         $code_num=$asset_num+1>=10?(string)($asset_num+1):"0".(string)($asset_num+1);
-        $code=$alias."-".$sigla[0]->abbreviazione.$code_num;
+        $code=$alias."-".$device_type.$code_num; //$code=$alias."-".$sigla[0]->abbreviazione.$code_num;
         return $code;
     }
 
     function codeNaDevice($device_type) {
-      $count=Asset::where("codifica dispositivo","LIKE","%ADY-NA-{$device_type}%")->count();
+      $count=Asset::where("codifica_dispositivo","LIKE","%ADY-NA-{$device_type}%")->count();
       $count+=1;
       if($count<10) {
        return "ADY-NA-{$device_type}0{$count}";
@@ -145,27 +147,27 @@ class AssetController extends Controller
 
     function getAsset($value) {
         if($value=="inner") {
-            $list=Asset::select("codifica dispositivo as codifica","serial number as serial","tipo dispositivo as tipo","owner_name as nome_azienda","id")->where("owner_name","!=",null)->get();
+            $list=Asset::select("codifica_dispositivo as codifica","serial_number as serial","tipo_dispositivo as tipo","owner_name as nome_azienda","id")->where("owner_name","!=",null)->orderBy('tipo')->get();
             return json_encode($list);
         }
         else if($value=="na") {
-           $list=Asset::select("codifica dispositivo as codifica","serial number as serial","tipo dispositivo as tipo","nome_azienda","id")->where("codifica","like","ADY-NA%")->get();
+           $list=Asset::select("codifica_dispositivo as codifica","serial_number as serial","tipo_dispositivo as tipo","id")->where("codifica_dispositivo","like","ADY-NA%")->orderBy('tipo')->get();
            return json_encode($list);
         }
         else {
-            $list=Asset::select("codifica dispositivo as codifica","serial number as serial","tipo dispositivo as tipo","nome_azienda","assets.id")->join("customers","customer_id","=","customers.id")->where("customer_id","=",$value)->get(); //second: 'customers.id'
+            $list=Asset::select("codifica_dispositivo as codifica","serial_number as serial","tipo_dispositivo as tipo","nome_azienda","assets.id")->join("customers","customer_id","=","customers.id")->where("customer_id","=",$value)->orderBy('tipo')->get(); //second: 'customers.id'
             return json_encode($list);
         }
     }
 
     function ch_pwd($id,Request $request) {
-        $password=User::select("password")->where("id","=",value: $id)->get();
-        if(Hash::check($request->old_pw,$password)) {
+        $password=User::select("password")->where("id","=",value: $id)->first()->password;
+        if(Hash::check($request->old_pw,$password) && $request->new_pw==$request->cnf_pw && preg_match('/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/',$request->new_pw)) {
             User::where('id',$id)->update(['password'=>Hash::make($request->new_pw)]);
             return redirect('mng_user')->with('scss','Password modificata con successo');
         }
         else {
-            return redirect('mng_user')->with('fail',"Password corrente sbagliata");
+            return redirect('mng_user')->with('fail','Qualcosa è andato storto; assicurarsi di inserire tutti i campi correttamente');
         }
     }
 
@@ -203,7 +205,7 @@ class AssetController extends Controller
     }
     function del_asset($id) {
        Asset::where('id',$id)->update([
-         'codifica dispositivo' => $this->codeNaDevice((Asset::select("tipo dispositivo as dispositivo")->where('id',$id)->get())[0]->dispositivo),
+         'codifica_dispositivo' => $this->codeNaDevice(Asset::select("tipo_dispositivo as dispositivo")->where('id',$id)->first()->dispositivo), //'codifica_dispositivo' => $this->codeNaDevice((Asset::select("tipo_dispositivo as dispositivo")->where('id',$id)->get())[0]->dispositivo),
          'type' => 'interno',
          'customer_id' => null,
          'owner_name' => null
@@ -215,14 +217,14 @@ class AssetController extends Controller
 
        if($req->sel_dest==="inner") {
           Asset::where('id',$id)->update([
-            'codifica dispositivo' => $this->codeDevice((Asset::select("tipo dispositivo as dispositivo")->where('id',$id)->get())[0]->dispositivo,"Adyda"),
+            'codifica_dispositivo' => $this->codeDevice(Asset::select("tipo_dispositivo as dispositivo")->where('id',$id)->first()->dispositivo,"Adyda"), //'codifica_dispositivo' => $this->codeDevice((Asset::select("tipo_dispositivo as dispositivo")->where('id',$id)->get())[0]->dispositivo,"Adyda"),
             'type' => 'interno',
             'owner_name' => $req->dest_name
           ]);
        }
        else {
           Asset::where('id',$id)->update([
-             'codifica dispositivo' => $this->codeDevice((Asset::select("tipo dispositivo as dispositivo")->where('id',$id)->get())[0]->dispositivo,(Customer::select("nome_azienda")->where('id',$req->comp_id)->get())[0]->nome_azienda),
+             'codifica_dispositivo' => $this->codeDevice(Asset::select("tipo_dispositivo as dispositivo")->where('id',$id)->first()->dispositivo,Customer::select("nome_azienda")->where('id',$req->comp_id)->first()->nome_azienda), //'codifica_dispositivo' => $this->codeDevice((Asset::select("tipo_dispositivo as dispositivo")->where('id',$id)->get())[0]->dispositivo,(Customer::select("nome_azienda")->where('id',$req->comp_id)->get())[0]->nome_azienda),
              'type' => 'cliente',
              'customer_id' => $req->comp_id
           ]);

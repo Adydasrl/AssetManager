@@ -8,6 +8,12 @@
     <title>Gestione utenti</title>
 </head>
 <body>
+    @if(Session::has("fail"))
+        <div class="alert alert-danger" role="alert">{{Session::get("fail")}}</div>
+    @else
+        <div class="alert alert-danger" role="alert">{{Session::get("scss")}}</div>
+    @endif
+
     <div class="login-container">
         <h1>Scegli un'opzione</h1>
         <a href="./ch_pwd_form"><button>Cambia Password</button></a><br><br>
